@@ -5,8 +5,7 @@ on:
     branches:
       - main
 jobs:
-  firsttime:
+  test:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello GitHub Actions"
-      - run: echo ci rocks
