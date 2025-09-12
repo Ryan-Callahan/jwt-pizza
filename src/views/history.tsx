@@ -3,7 +3,7 @@ import View from './view';
 
 export default function History() {
   return (
-    <View title='Mama Rucci, my my'>
+    <View title='Mama Ricci, my my'>
       <div className='text-neutral-100 text-start py-8 px-4 sm:px-6 lg:px-8'>
         <img src='mamaRicci.png' className='w-64 m-4 float-right' />
         <div>
