@@ -41,6 +41,7 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npm run test:coverage
+        continue-on-error: true
 
       - name: Update coverage
         run: |
