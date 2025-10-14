@@ -3,12 +3,36 @@ import { test, expect } from 'playwright-test-coverage';
 import { Role, User } from '../src/service/pizzaService';
 
 test('home page', async ({ page }) => {
-  await page.goto('/');
+    await page.goto('/');
 
-  expect(await page.title()).toBe('JWT Pizza');
+    expect(await page.title()).toBe('JWT Pizza');
 });
 
-test('login', async ({ page }) => {
+test('footer links', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'About' }).click();
+    await expect(page.getByRole('list')).toContainText('about');
+    await page.getByRole('link', { name: 'History' }).click();
+    await expect(page.getByRole('list')).toContainText('history');
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Franchise' }).click();
+    await expect(page.getByRole('list')).toContainText('franchise-dashboard');
+});
+
+test('register', async ({ page }) => {
+    await basicInit(page);
+    await page.getByRole('link', { name: 'Register' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome to the party');
+    await page.getByRole('textbox', { name: 'Full name' }).fill('Kai Chen');
+    await page.getByRole('textbox', { name: 'Email address' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill('a');
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page.locator('#navbar-dark')).toContainText('Logout');
+    await expect(page.getByLabel('Global')).toContainText('t');
+});
+
+test('login, logout', async ({ page }) => {
     await basicInit(page);
     await page.getByRole('link', { name: 'Login' }).click();
     await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
@@ -16,6 +40,19 @@ test('login', async ({ page }) => {
     await page.getByRole('button', { name: 'Login' }).click();
 
     await expect(page.getByRole('link', { name: 'KC' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'KC' }).click();
+    await expect(page.getByRole('main')).toContainText('Kai Chen');
+    await expect(page.getByText('d@jwt.com')).toBeVisible();
+    await expect(page.getByRole('main')).toContainText('d@jwt.com');
+    await expect(page.getByRole('main')).toContainText('diner');
+    await expect(page.locator('tbody')).toContainText('5');
+    await expect(page.locator('tbody')).toContainText('2025-10-13T20:58:29.000Z');
+
+    await expect(page.locator('#navbar-dark')).toContainText('Logout');
+    await page.getByRole('link', { name: 'Logout' }).click();
+    await expect(page.locator('#navbar-dark')).toContainText('Login');
+    await expect(page.locator('#navbar-dark')).toContainText('Register');
 });
 
 test('purchase with login', async ({ page }) => {
@@ -56,19 +93,29 @@ async function basicInit(page: Page) {
 
     // Authorize login for the given user
     await page.route('*/**/api/auth', async (route) => {
-        const loginReq = route.request().postDataJSON();
-        const user = validUsers[loginReq.email];
-        if (!user || user.password !== loginReq.password) {
-            await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-            return;
+        const method = route.request().method();
+        if (method === 'POST' || method === 'PUT') {
+            const loginReq = route.request().postDataJSON();
+            const user = validUsers[loginReq.email];
+            if (!user || user.password !== loginReq.password) {
+                await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
+                return;
+            }
+            loggedInUser = validUsers[loginReq.email];
+            const loginRes = {
+                user: loggedInUser,
+                token: 'abcdef',
+            };
+            expect(route.request().method() === 'PUT' ||
+                route.request().method() === 'POST').toBe(true);
+            await route.fulfill({ json: loginRes });
         }
-        loggedInUser = validUsers[loginReq.email];
-        const loginRes = {
-            user: loggedInUser,
-            token: 'abcdef',
-        };
-        expect(route.request().method()).toBe('PUT');
-        await route.fulfill({ json: loginRes });
+        else if (method === 'DELETE') {
+            const authRes = {
+                "message": "logout successful"
+            };
+            await route.fulfill({ json: authRes });
+        }
     });
 
     // Return the currently logged in user
@@ -122,13 +169,45 @@ async function basicInit(page: Page) {
 
     // Order a pizza.
     await page.route('*/**/api/order', async (route) => {
-        const orderReq = route.request().postDataJSON();
-        const orderRes = {
-            order: { ...orderReq, id: 23 },
-            jwt: 'eyJpYXQ',
-        };
-        expect(route.request().method()).toBe('POST');
-        await route.fulfill({ json: orderRes });
+        const method = route.request().method();
+        if (method === 'POST') {
+            const orderReq = route.request().postDataJSON();
+            const orderRes = {
+                order: { ...orderReq, id: 23 },
+                jwt: 'eyJpYXQ',
+            };
+            expect(route.request().method()).toBe('POST');
+            await route.fulfill({ json: orderRes });
+        }
+        else if (method === 'GET') {
+            const orderRes = {
+                "dinerId": 2,
+                "orders": [
+                    {
+                        "id": 5,
+                        "franchiseId": 1,
+                        "storeId": 2,
+                        "date": "2025-10-13T20:58:29.000Z",
+                        "items": [
+                            {
+                                "id": 5,
+                                "menuId": 1,
+                                "description": "Veggie",
+                                "price": 0.0038
+                            },
+                            {
+                                "id": 6,
+                                "menuId": 2,
+                                "description": "Pepperoni",
+                                "price": 0.0042
+                            }
+                        ]
+                    },
+                ],
+                "page": 1
+            };
+            await route.fulfill({ json: orderRes });
+        }
     });
 
     await page.goto('/');
