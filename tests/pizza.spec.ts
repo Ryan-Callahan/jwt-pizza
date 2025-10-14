@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { test, expect } from 'playwright-test-coverage';
-import { Role, User } from '../src/service/pizzaService';
+import { Franchise, Role, User } from '../src/service/pizzaService';
 
 test('home page', async ({ page }) => {
   await page.goto('/');
@@ -107,7 +107,27 @@ test('admin dashboard', async ({ page }) => {
 });
 
 test('create/close franchise', async ({ page }) => {
-
+  await adminInit(page);
+  await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+  await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await page.getByRole('link', { name: 'Admin' }).click();
+  await page.getByRole('button', { name: 'Add Franchise' }).click();
+  await expect(page.getByRole('heading')).toContainText('Create franchise');
+  await page.getByRole('textbox', { name: 'franchise name' }).click();
+  await page.getByRole('textbox', { name: 'franchise name' }).fill('test');
+  await page.getByRole('textbox', { name: 'franchisee admin email' }).click();
+  await page.getByRole('textbox', { name: 'franchisee admin email' }).fill('a@jwt.com');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('cell', { name: 'test' })).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('test');
+  await expect(page.getByRole('table')).toContainText('Close');
+  await page.getByRole('row', { name: 'test Kai Chen Close' }).getByRole('button').click();
+  await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('h2')).toContainText('Mama Ricci\'s kitchen');
 });
 
 test('create/close store', async ({ page }) => {
@@ -247,6 +267,23 @@ async function basicInit(page: Page) {
 async function adminInit(page: Page) {
   let loggedInUser: User | undefined;
   const validUsers: Record<string, User> = { 'a@jwt.com': { id: '3', name: 'Kai Chen', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] } };
+  let franchises = [{
+          "id": 1,
+          "name": "pizzaPocket",
+          "admins": [
+            {
+              "id": 3,
+              "name": "pizza franchisee",
+              "email": "f@jwt.com"
+            }
+          ],
+          "stores": [
+            {
+              "id": 2,
+              "name": "SOUP"
+            }
+          ]
+        }];
 
   await page.route('*/**/api/auth', async (route) => {
     const method = route.request().method();
@@ -267,21 +304,53 @@ async function adminInit(page: Page) {
 
   await page.route('*/**/api/franchise?page=0&limit=3&name=*', async (route) => {
     const franchiseRes = {
-      "franchises": [
-        {
-          "id": 1,
-          "name": "pizzaPocket",
-          "stores": [
-            {
-              "id": 2,
-              "name": "SOUP"
-            }
-          ]
-        }
-      ],
+      "franchises": franchises,
       "more": false
     }
+    expect(route.request().method()).toBe('GET');
     await route.fulfill({ json: franchiseRes });
+  });
+
+  await page.route('*/**/api/franchise', async (route) => {
+    const franchiseRes = {
+      "stores": [],
+      "id": 2,
+      "name": "test",
+      "admins": [
+        {
+          "email": "a@jwt.com",
+          "id": 3,
+          "name": "Kai Chen"
+        }
+      ]
+    }
+    franchises.push(franchiseRes);
+    expect(route.request().method()).toBe('POST');
+    await route.fulfill({ json: franchiseRes });
+  });
+
+  await page.route('*/**/api/franchise/2', async (route) => {
+    franchises = [{
+      "id": 1,
+      "name": "pizzaPocket",
+      "admins": [
+        {
+          "id": 3,
+          "name": "pizza franchisee",
+          "email": "f@jwt.com"
+        }
+      ],
+      "stores": [
+        {
+          "id": 2,
+          "name": "SOUP"
+        }
+      ]
+    }];
+    expect(route.request().method()).toBe('DELETE');
+    await route.fulfill({ json: {
+      "message": "franchise deleted"
+    }});
   });
 
   await page.goto('/');
