@@ -7,6 +7,7 @@ import Home from '../views/home';
 import About from '../views/about';
 import Register from '../views/register';
 import Login from '../views/login';
+import DeleteUser from "../views/deleteUser";
 import Logout from '../views/logout';
 import Menu from '../views/menu';
 import Delivery from '../views/delivery';
@@ -84,6 +85,7 @@ export default function App() {
     { title: 'Login', to: '/:subPath?/login', component: <Login setUser={setUser} />, constraints: [loggedOut], display: ['nav'] },
     { title: 'Register', to: '/:subPath?/register', component: <Register setUser={setUser} />, constraints: [loggedOut], display: ['nav'] },
     { title: 'Logout', to: '/:subPath?/logout', component: <Logout setUser={setUser} />, constraints: [loggedIn], display: ['nav'] },
+    { title: 'Delete user', to: '/:subPath?/delete-user', component: <DeleteUser />, display: [] },
     { title: 'Docs', to: '/docs/:docType?', component: <Docs />, display: [] },
     { title: 'Opps', to: '*', component: <NotFound />, display: [] },
   ];

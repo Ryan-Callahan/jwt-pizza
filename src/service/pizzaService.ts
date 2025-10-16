@@ -105,7 +105,7 @@ interface PizzaService {
   logout(): void;
   getUser(): Promise<User | null>;
   updateUser(user: User): Promise<User>;
-  listUsers(page?: number, limit?: number, name?: string): Promise<User[]>;
+  listUsers(page?: number, limit?: number, name?: string): Promise<UserList>;
   deleteUser(user: User): Promise<null>;
   getMenu(): Promise<Menu>;
   getOrders(user: User): Promise<OrderHistory>;
@@ -120,4 +120,4 @@ interface PizzaService {
   docs(docType: string): Promise<Endpoints>;
 }
 
-export { Role, PizzaService, User, Menu, Pizza, OrderHistory, Order, Franchise, FranchiseList, Store, OrderItem, Endpoint, Endpoints, OrderResponse, JWTPayload };
+export { Role, PizzaService, User, UserList, Menu, Pizza, OrderHistory, Order, Franchise, FranchiseList, Store, OrderItem, Endpoint, Endpoints, OrderResponse, JWTPayload };

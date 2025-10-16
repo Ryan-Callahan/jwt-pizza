@@ -9,7 +9,7 @@ import {
   OrderResponse,
   PizzaService,
   Store,
-  User
+  User, UserList
 } from './pizzaService';
 
 // @ts-ignore
@@ -90,8 +90,8 @@ class HttpPizzaService implements PizzaService {
     return Promise.resolve(user);
   }
 
-  async listUsers(page?: number, limit?: number, name?: string): Promise<User[]> {
-    let users: User[];
+  async listUsers(page?: number, limit?: number, name?: string): Promise<UserList> {
+    let users: UserList;
     if (page !== undefined && limit !== undefined && name !== undefined) {
       users = await this.callEndpoint(`/api/user?page=${page}&limit=${limit}&name=${name}`, 'GET');
     } else {
