@@ -103,7 +103,8 @@ test('admin dashboard', async ({ page }) => {
   await expect(page.locator('#navbar-dark')).toContainText('Admin');
   await page.getByRole('link', { name: 'Admin' }).click();
   await expect(page.locator('h2')).toContainText('Mama Ricci\'s kitchen');
-  await expect(page.locator('h3')).toContainText('Franchises');
+  await expect(page.getByRole('main')).toContainText('Users');
+  await expect(page.getByRole('main')).toContainText('Franchises');
   await expect(page.locator('tbody')).toContainText('pizzaPocket');
 });
 
@@ -126,8 +127,8 @@ test('create/close franchise', async ({ page }) => {
   await page.getByRole('button', { name: 'Create' }).click();
 
   await expect(page.getByRole('cell', { name: 'test' })).toBeVisible();
-  await expect(page.getByRole('table')).toContainText('test');
-  await expect(page.getByRole('table')).toContainText('Close');
+  await expect(page.getByRole('main')).toContainText('test');
+  await expect(page.getByRole('main')).toContainText('Close');
 
   await page.getByRole('row', { name: 'test Kai Chen Close' }).getByRole('button').click();
   await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
