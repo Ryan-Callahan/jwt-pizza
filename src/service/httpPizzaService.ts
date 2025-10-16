@@ -90,6 +90,20 @@ class HttpPizzaService implements PizzaService {
     return Promise.resolve(user);
   }
 
+  async listUsers(page?: number, limit?: number, name?: string): Promise<User[]> {
+    let users: User[];
+    if (page !== undefined && limit !== undefined && name !== undefined) {
+      users = await this.callEndpoint(`/api/user?page=${page}&limit=${limit}&name=${name}`, 'GET');
+    } else {
+      users = await this.callEndpoint(`/api/user`, 'GET');
+    }
+    return Promise.resolve(users);
+  }
+
+  async deleteUser(user: User): Promise<null> {
+    return this.callEndpoint(`/api/user/${user.id}`, 'DELETE');
+  }
+
   async getMenu(): Promise<Menu> {
     return this.callEndpoint('/api/order/menu');
   }
